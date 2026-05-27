@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agri-Tech</title>
+    <meta name="description" content="A homstead-farm manager integrating crop cycles and weather api">
+    <meta name="keywords" content="Farming, homestead, data">
+    <meta name="author" content="Dillon Babor">
+</head>
+<header>
+    <div class="alert">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+        This is an alert box.
+    </div>
+    <h1>Agri-Tech</h1>
+</header>
+
+<body>
+
+    <a class="weatherwidget-io" href="https://forecast7.com/en/40d71n74d01/new-york/" data-label_1="NEW YORK"
+        data-label_2="WEATHER" data-theme="original">NEW YORK WEATHER</a>
+    <script>
+        !function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = 'https://weatherwidget.io/js/widget.min.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'weatherwidget-io-js');
+    </script>
+
+    <p>Hello</p>
+
+    <form action="/action_page.php">
+        <label for="fname">Crop Name:</label>
+        <input type="text" id="cropname" name="cropname"><br><br>
+        <label for="lname">Growth Time:</label>
+        <input type="text" id="growthtime" name="growthtime"><br><br>
+        <input type="submit" value="Submit">
+    </form>
+</body>
+
+</html>
