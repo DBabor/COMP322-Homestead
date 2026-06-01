@@ -5,66 +5,103 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agri-Tech</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
     <meta name="description" content="A homstead-farm manager integrating crop cycles and weather api">
     <meta name="keywords" content="Farming, homestead, data">
     <meta name="author" content="Dillon Babor">
 
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="js/app.js" defer></script>
 </head>
-<header>
-    <h1>Agri-Tech</h1>
-</header>
 
 <body>
+    <header>
+        <h1>Agri-Tech</h1>
+    </header>
 
-    <!-- Weather Widget -->
-    <a class="weatherwidget-io" href="https://forecast7.com/en/40d71n74d01/new-york/" data-label_1="NEW YORK"
-        data-label_2="WEATHER" data-theme="original">NEW YORK WEATHER</a>
-    <script>
-        !function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = 'https://weatherwidget.io/js/widget.min.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'weatherwidget-io-js');
-    </script>
+    <main class="siteLayout">
 
-    <aside class="croptable">
-        <ul id="cropdata">
-            <li>Crop</li>
-            <li>Growth Time (days)</li>
-            <li>Yield (lbs)</li>
-            <li>Frost Susceptible</li>
-            <li>Drought Susceptible</li>
-        </ul>
-    </aside>
+        <!-- Container for the alert bar -->
+        <div id="alertContainer" class="alertContainer"></div>
 
-    <section class="form">
-        <form id="cropform">
-            <!-- Crop Input -->
-            <label for="croplabel">Crop Name:</label>
-            <input type="text" id="cropname" name="cropname">
+        <!-- The section for the local weather API (OpenWeather)-->
+        <section class="weatherInsert">
+            <h3>Local Weather</h3>
+            <div class="weatherSearch">
+                <input type="text" id="locationInput" placeholder="EX: Greensboro, NC">
+                <button id="weatherButton">Search</button>
+            </div>
+            <div id="weatherDisplay">
+                <div id="locationHeader" style="font-weight: bold; margin-bottom: 10px; font-size: 1rem;">Greensboro
+                </div>
+                <div id="forecastContainer" class="forecastGrid">Loading outlook</div>
+            </div>
+        </section>
 
-            <!-- Growth Input -->
-            <label for="growthlabel">Growth Time (days):</label>
-            <input type="text" id="growthtime" name="growthtime">
+        <!-- Crop form, allows te entry of name, growth time, yield, frost, and drought susceptibility -->
+        <section class="form">
+            <form id="cropForm">
+                <!-- Crop Input -->
+                <label for="cropName">Crop Name:</label>
+                <input type="text" id="cropName" name="cropName" placeholder="EX: Lettuce">
 
-            <!-- Crop Yield -->
-            <label for="yieldlabel">Crop Yield (lbs):</label>
-            <input type="text" id="cropyield" name="cropyield">
+                <!-- Growth Input -->
+                <label for="growthTime">Growth Time (days):</label>
+                <input type="text" id="growthTime" name="growthTime" placeholder="EX: 75">
 
-            <!-- Frost Susceptibility Input -->
-            <label for="frostlabel">Frost Susceptible:</label>
-            <input type="radio" id="frostyes" name="frostsusceptible">
-            <label for="yes">Yes</label>
-            <input type="radio" id="frostno" name="frostsusceptible">
-            <label for="no">No</label>
+                <!-- Crop Yield -->
+                <label for="cropYield">Crop Yield (lbs):</label>
+                <input type="text" id="cropYield" name="cropYield" placeholder="EX: 120">
 
-            <!-- Drought Susceptibility Input -->
-            <label for="droughtlabel">Drought Susceptible:</label>
-            <input type="radio" id="droughtyes" name="droughtsusceptible">
-            <label for="yes">Yes</label>
-            <input type="radio" id="droughtno" name="droughtsusceptible">
-            <label for="no">No</label>
+                <!-- Frost Susceptibility Input -->
+                <label>Frost Susceptible:</label>
+                <div class="radioGroup">
+                    <input type="radio" id="frostYes" name="frostSusceptible" value="Yes">
+                    <label for="frostYes">Yes</label>
+                    <input type="radio" id="frostNo" name="frostSusceptible" value="No">
+                    <label for="frostNo">No</label>
+                </div>
 
-            <input type="submit" value="Submit">
-        </form>
-    </section>
+                <!-- Drought Susceptibility Input -->
+                <label>Drought Susceptible:</label>
+                <div class="radioGroup">
+                    <input type="radio" id="droughtYes" name="droughtSusceptible" value="Yes">
+                    <label for="droughtYes">Yes</label>
+                    <input type="radio" id="droughtNo" name="droughtSusceptible" value="No">
+                    <label for="droughtNo">No</label>
+                </div>
+
+                <!-- Submit button -->
+                <input type="submit" value="Submit">
+            </form>
+        </section>
+
+        <!-- User entry crop table -->
+        <section class="table">
+            <table id="cropTable">
+                <thead>
+                    <tr>
+                        <th>Crop</th>
+                        <th>Growth Time (days)</th>
+                        <th>Yield (lbs)</th>
+                        <th>Frost Susceptible</th>
+                        <th>Drought Susceptible</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <!-- Default table placeholder if empty -->
+                    <tr class="emptyTable">
+                        <td colspan="6" style="color: #888; font-style: italic; padding: 20px;">
+                            No crops added, use the form to track your crop cycles
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
 
 </body>
 
