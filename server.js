@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 
-app.use(express.json()); //Auto parse incoming JSON
+app.use(express.json()); //Auto parse incoming JSON file
 app.use(express.static("public")); //Frontend files in the public folder
 
 //Resets when the server restarts
