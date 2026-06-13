@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agri-Tech</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <meta name="description" content="A homstead-farm manager integrating crop cycles and weather api">
+    <meta name="keywords" content="Farming, homestead, data">
+    <meta name="author" content="Dillon Babor">
+
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="js/app.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h1>Agri-Tech</h1>
+    </header>
+
+    <main class="siteLayout">
+
+        <!-- Container for the alert bar -->
+        <div id="alertContainer" class="alertContainer"></div>
+
+        <!-- The section for the local weather API (OpenWeather)-->
+        <section class="weatherInsert">
+            <h3>Local Weather</h3>
+            <div class="weatherSearch">
+                <input type="text" id="locationInput" placeholder="EX: Greensboro, NC">
+                <button id="weatherButton">Search</button>
+            </div>
+            <div id="weatherDisplay">
+                <div id="locationHeader" style="font-weight: bold; margin-bottom: 10px; font-size: 1rem;">Greensboro
+                </div>
+                <div id="forecastContainer" class="forecastGrid">Loading outlook</div>
+            </div>
+        </section>
+
+        <!-- Crop form, allows te entry of name, growth time, yield, frost, and drought susceptibility -->
+        <section class="form">
+            <form id="cropForm">
+                <!-- Crop Input -->
+                <label for="cropName">Crop Name:</label>
+                <input type="text" id="cropName" name="cropName" placeholder="EX: Lettuce">
+
+                <!-- Growth Input -->
+                <label for="growthTime">Growth Time (days):</label>
+                <input type="text" id="growthTime" name="growthTime" placeholder="EX: 75">
+
+                <!-- Crop Yield -->
+                <label for="cropYield">Crop Yield (lbs):</label>
+                <input type="text" id="cropYield" name="cropYield" placeholder="EX: 120">
+
+                <!-- Frost Susceptibility Input -->
+                <label>Frost Susceptible:</label>
+                <div class="radioGroup">
+                    <input type="radio" id="frostYes" name="frostSusceptible" value="Yes">
+                    <label for="frostYes">Yes</label>
+                    <input type="radio" id="frostNo" name="frostSusceptible" value="No">
+                    <label for="frostNo">No</label>
+                </div>
+
+                <!-- Drought Susceptibility Input -->
+                <label>Drought Susceptible:</label>
+                <div class="radioGroup">
+                    <input type="radio" id="droughtYes" name="droughtSusceptible" value="Yes">
+                    <label for="droughtYes">Yes</label>
+                    <input type="radio" id="droughtNo" name="droughtSusceptible" value="No">
+                    <label for="droughtNo">No</label>
+                </div>
+
+                <!-- Submit button -->
+                <input type="submit" value="Submit">
+            </form>
+        </section>
+
+        <!-- User entry crop table -->
+        <section class="table">
+            <table id="cropTable">
+                <thead>
+                    <tr>
+                        <th>Crop</th>
+                        <th>Growth Time (days)</th>
+                        <th>Yield (lbs)</th>
+                        <th>Frost Susceptible</th>
+                        <th>Drought Susceptible</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <!-- Default table placeholder if empty -->
+                    <tr class="emptyTable">
+                        <td colspan="6" style="color: #888; font-style: italic; padding: 20px;">
+                            No crops added, use the form to track your crop cycles
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+</body>
+
+</html>
