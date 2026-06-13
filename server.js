@@ -37,4 +37,7 @@ app.post("/api/location", (req, res) => {
   res.json({message: "Location has been updated..."});
 });
 
+app.use((req, res) => { //404 Error
+  res.status(404).send("404 - PAGE NOT FOUND")
+});
 app.listen(3000, () => console.log("Server running on port 3000")); //Shows we're listening ;p
