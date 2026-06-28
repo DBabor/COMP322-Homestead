@@ -4,8 +4,13 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
     const tableBody = document.querySelector("#cropTable tbody"); // Selects the crop table body
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     //Replaces the local save, fetches data from the server on page load
     fetch("/api/crops")
+=======
+    //Replaces the local save functionality, fetches data from the server on page load
+    fetch("/api/data")
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
 =======
     //Replaces the local save functionality, fetches data from the server on page load
     fetch("/api/data")
@@ -15,7 +20,11 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
             //Go through all of the crops returned individually
             savedCrops.forEach(crop => {
 <<<<<<< HEAD
+<<<<<<< HEAD
                 renderCropRow(crop.id, crop.name, crop.time, crop.yield, crop.frost, crop.drought)
+=======
+                renderCropRow(crop.name, crop.time, crop.yield, crop.frost, crop.drought)
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
 =======
                 renderCropRow(crop.name, crop.time, crop.yield, crop.frost, crop.drought)
 >>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
@@ -63,7 +72,11 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
 
         //Sends POST request with the crop data to the backend
 <<<<<<< HEAD
+<<<<<<< HEAD
         fetch("/api/crops", {
+=======
+        fetch("/api/data", {
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
 =======
         fetch("/api/data", {
 >>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
@@ -72,10 +85,16 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
             body: JSON.stringify(cropData)
         })
 <<<<<<< HEAD
+<<<<<<< HEAD
             .then(res => res.json())
             .then(newCrop => {
                 //Render after saving
                 renderCropRow(newCrop.id, name, time, cropYield, frost, drought); //ID returned by Prisma
+=======
+            .then(() => {
+                //Render after saving
+                renderCropRow(name, time, cropYield, frost, drought);
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
 =======
             .then(() => {
                 //Render after saving
@@ -106,6 +125,9 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
 
             fetch(`/api/data/${rowIndex}`, { method: "DELETE" })
                 .then(() => row.remove());
+<<<<<<< HEAD
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
+=======
 >>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
         }
     });

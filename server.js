@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 require("dotenv").config();
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
@@ -100,6 +101,8 @@ app.post("/api/location", (req, res) => { lastLocation = req.body.location; res.
 app.use((req, res) => res.status(404).json({ error: "Not found" }));
 
 =======
+=======
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
 const express = require("express");
 const app = express();
 
@@ -142,5 +145,8 @@ app.post("/api/location", (req, res) => {
 app.use((req, res) => { //404 Error
   res.status(404).send("404 - PAGE NOT FOUND")
 });
+<<<<<<< HEAD
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
+=======
 >>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
 app.listen(3000, () => console.log("Server running on port 3000")); //Shows we're listening ;p
