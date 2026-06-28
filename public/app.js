@@ -3,15 +3,20 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
     const cropForm = document.getElementById("cropForm");
     const tableBody = document.querySelector("#cropTable tbody"); // Selects the crop table body
 
-    let savedCrops = JSON.parse(localStorage.getItem("farmCrops")) || []; //Gets stored crop data
-
-    savedCrops.forEach(crop => {
-        renderCropRow(crop.name, crop.time, crop.yield, crop.frost, crop.drought); //Loops and renders saved crops
-    });
+    //Replaces the local save, fetches data from the server on page load
+    fetch("/api/crops")
+        .then(res => res.json()) //Converts server response into JSON
+        .then(savedCrops => {
+            //Go through all of the crops returned individually
+            savedCrops.forEach(crop => {
+                renderCropRow(crop.id, crop.name, crop.time, crop.yield, crop.frost, crop.drought)
+            });
+        });
 
     /*Adds rows to the crop table*/
-    function renderCropRow(name, time, cropYield, frost, drought) {
+    function renderCropRow(id, name, time, cropYield, frost, drought) {
         const newRow = document.createElement("tr"); //Row structure: name, growth time, yield, frost, drough, delete button
+        newRow.setAttribute("data-id", id);
         newRow.innerHTML = `
         <td>${name}</td>
         <td>${time}</td>
@@ -33,8 +38,8 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
         const cropYield = document.getElementById("cropYield").value.trim();
 
         //Detects radio button checks
-        const frostRadio = document.querySelector('input[name="frostSusceptible"]:checked');
-        const droughtRadio = document.querySelector('input[name="droughtSusceptible"]:checked');
+        const frostRadio = document.querySelector("input[name='frostSusceptible']:checked");
+        const droughtRadio = document.querySelector("input[name='droughtSusceptible']:checked");
         //Defaults to NO if nothing is checked
         const frost = frostRadio ? frostRadio.value : "No";
         const drought = droughtRadio ? droughtRadio.value : "No";
@@ -47,28 +52,35 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
 
         const cropData = { name, time, yield: cropYield, frost, drought }; //Places the inputs into a data object
 
-        //Append the data to the array, and save to local storage
-        savedCrops.push(cropData);
-        localStorage.setItem("farmCrops", JSON.stringify(savedCrops));
-
-        renderCropRow(name, time, cropYield, frost, drought); //Show cropData in the table
-        cropForm.reset(); //Reset the form fields
+        //Sends POST request with the crop data to the backend
+        fetch("/api/crops", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cropData)
+        })
+            .then(res => res.json())
+            .then(newCrop => {
+                //Render after saving
+                renderCropRow(newCrop.id, name, time, cropYield, frost, drought); //ID returned by Prisma
+                cropForm.reset(); //Reset the form fields
+            });
     });
 
     //Listens for clicks on the tables delete button
     tableBody.addEventListener("click", (event) => {
         if (event.target.classList.contains("deleteButton")) {
             const row = event.target.closest("tr");
+            const cropID = row.getAttribute("data-id"); //PostgreSQL ID
 
-            const rowIndex = Array.from(tableBody.querySelectorAll("tr:not(.emptyTable)")).indexOf(row);
-
-            //If button is clicked remove it from the array and re-save local storage
-            if (rowIndex > -1) {
-                savedCrops.splice(rowIndex, 1);
-                localStorage.setItem("farmCrops", JSON.stringify(savedCrops));
-            }
-
-            row.remove();
+            fetch(`/api/crops/${cropID}`, { method: "DELETE" })
+                .then(res => {
+                    if (res.ok) {
+                        row.remove();
+                    }
+                    else {
+                        alert("Could not delete from server"); //Added an alert if it doesnt delete
+                    }
+                });
         }
     });
 
@@ -144,8 +156,12 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
                 });
             });
 
-            //Save forecast metrics to local storage
-            localStorage.setItem("savedWeather", JSON.stringify({ locationName: locationHeader.textContent, forecast: dailyData }));
+            //Save forecast metrics to server
+            fetch("/api/location", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ location: location })
+            });
 
             //Set warnings to default and limit days tracked to 5
             let freezeWarning = false;
@@ -247,14 +263,16 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
         }
     });
 
-    //Check local storage to find prior data
-    const cachedWeather = JSON.parse(localStorage.getItem("savedWeather"));
+    //Fetch the last location
+    fetch("/api/location")
+        .then(res => res.json())
+        .then(data => {
+            //If there is a saved location, use that. If not, use Greensboro
+            if (data.lastLocation) {
+                fetchForecast(data.lastLocation);
+            } else {
+                fetchForecast("Greensboro");
+            }
 
-    if (cachedWeather) {
-        locationHeader.textContent = cachedWeather.locationName; //Fetch the city name
-        fetchForecast(cachedWeather.locationName.split(",")[0]);
-    } else {
-        fetchForecast("Greensboro"); //Default city
-    }
-
-});
+        });
+})
