@@ -1,15 +1,33 @@
-/*Local Storage crop tracker*/
+/*Server Crop Tracker*/
 document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DOM is parsed before running the script
     const cropForm = document.getElementById("cropForm");
     const tableBody = document.querySelector("#cropTable tbody"); // Selects the crop table body
 
+<<<<<<< HEAD
+<<<<<<< HEAD
     //Replaces the local save, fetches data from the server on page load
     fetch("/api/crops")
+=======
+    //Replaces the local save functionality, fetches data from the server on page load
+    fetch("/api/data")
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
+=======
+    //Replaces the local save functionality, fetches data from the server on page load
+    fetch("/api/data")
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
         .then(res => res.json()) //Converts server response into JSON
         .then(savedCrops => {
             //Go through all of the crops returned individually
             savedCrops.forEach(crop => {
+<<<<<<< HEAD
+<<<<<<< HEAD
                 renderCropRow(crop.id, crop.name, crop.time, crop.yield, crop.frost, crop.drought)
+=======
+                renderCropRow(crop.name, crop.time, crop.yield, crop.frost, crop.drought)
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
+=======
+                renderCropRow(crop.name, crop.time, crop.yield, crop.frost, crop.drought)
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
             });
         });
 
@@ -53,15 +71,35 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
         const cropData = { name, time, yield: cropYield, frost, drought }; //Places the inputs into a data object
 
         //Sends POST request with the crop data to the backend
+<<<<<<< HEAD
+<<<<<<< HEAD
         fetch("/api/crops", {
+=======
+        fetch("/api/data", {
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
+=======
+        fetch("/api/data", {
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(cropData)
         })
+<<<<<<< HEAD
+<<<<<<< HEAD
             .then(res => res.json())
             .then(newCrop => {
                 //Render after saving
                 renderCropRow(newCrop.id, name, time, cropYield, frost, drought); //ID returned by Prisma
+=======
+            .then(() => {
+                //Render after saving
+                renderCropRow(name, time, cropYield, frost, drought);
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
+=======
+            .then(() => {
+                //Render after saving
+                renderCropRow(name, time, cropYield, frost, drought);
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
                 cropForm.reset(); //Reset the form fields
             });
     });
@@ -72,6 +110,7 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
             const row = event.target.closest("tr");
             const cropID = row.getAttribute("data-id"); //PostgreSQL ID
 
+<<<<<<< HEAD
             fetch(`/api/crops/${cropID}`, { method: "DELETE" })
                 .then(res => {
                     if (res.ok) {
@@ -81,6 +120,15 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
                         alert("Could not delete from server"); //Added an alert if it doesnt delete
                     }
                 });
+=======
+            const rowIndex = Array.from(tableBody.querySelectorAll("tr:not(.emptyTable)")).indexOf(row);
+
+            fetch(`/api/data/${rowIndex}`, { method: "DELETE" })
+                .then(() => row.remove());
+<<<<<<< HEAD
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
+=======
+>>>>>>> 0ee0c9c79d05e6850ef9a9f2b5a4fc050ee2846a
         }
     });
 
