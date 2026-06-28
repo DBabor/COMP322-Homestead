@@ -1,4 +1,4 @@
-/*Local Storage crop tracker*/
+/*Server Crop Tracker*/
 document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DOM is parsed before running the script
     const cropForm = document.getElementById("cropForm");
     const tableBody = document.querySelector("#cropTable tbody"); // Selects the crop table body

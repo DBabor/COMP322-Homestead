@@ -1,0 +1,25 @@
+{
+  "name": "comp322-homestead",
+  "version": "1.0.0",
+  "description": "By: Dillon Babor\r Sprint 1\r Create a homestead manager web app that tracks temp, crops, and alerts (drought/frost).\r Needs to be modular and have local storage capabilities.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DBabor/COMP322-Homestead.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DBabor/COMP322-Homestead/issues"
+  },
+  "homepage": "https://github.com/DBabor/COMP322-Homestead#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
