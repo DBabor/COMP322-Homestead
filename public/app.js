@@ -3,19 +3,20 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
     const cropForm = document.getElementById("cropForm");
     const tableBody = document.querySelector("#cropTable tbody"); // Selects the crop table body
 
-    //Replaces the local save functionality, fetches data from the server on page load
-    fetch("/api/data")
+    //Replaces the local save, fetches data from the server on page load
+    fetch("/api/crops")
         .then(res => res.json()) //Converts server response into JSON
         .then(savedCrops => {
             //Go through all of the crops returned individually
             savedCrops.forEach(crop => {
-                renderCropRow(crop.name, crop.time, crop.yield, crop.frost, crop.drought)
+                renderCropRow(crop.id, crop.name, crop.time, crop.yield, crop.frost, crop.drought)
             });
         });
 
     /*Adds rows to the crop table*/
-    function renderCropRow(name, time, cropYield, frost, drought) {
+    function renderCropRow(id, name, time, cropYield, frost, drought) {
         const newRow = document.createElement("tr"); //Row structure: name, growth time, yield, frost, drough, delete button
+        newRow.setAttribute("data-id", id);
         newRow.innerHTML = `
         <td>${name}</td>
         <td>${time}</td>
@@ -52,14 +53,15 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
         const cropData = { name, time, yield: cropYield, frost, drought }; //Places the inputs into a data object
 
         //Sends POST request with the crop data to the backend
-        fetch("/api/data", {
+        fetch("/api/crops", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(cropData)
         })
-            .then(() => {
+            .then(res => res.json())
+            .then(newCrop => {
                 //Render after saving
-                renderCropRow(name, time, cropYield, frost, drought);
+                renderCropRow(newCrop.id, name, time, cropYield, frost, drought); //ID returned by Prisma
                 cropForm.reset(); //Reset the form fields
             });
     });
@@ -68,11 +70,17 @@ document.addEventListener("DOMContentLoaded", () => { // Waits until the docs DO
     tableBody.addEventListener("click", (event) => {
         if (event.target.classList.contains("deleteButton")) {
             const row = event.target.closest("tr");
+            const cropID = row.getAttribute("data-id"); //PostgreSQL ID
 
-            const rowIndex = Array.from(tableBody.querySelectorAll("tr:not(.emptyTable)")).indexOf(row);
-
-            fetch(`/api/data/${rowIndex}`, { method: "DELETE" })
-                .then(() => row.remove());
+            fetch(`/api/crops/${cropID}`, { method: "DELETE" })
+                .then(res => {
+                    if (res.ok) {
+                        row.remove();
+                    }
+                    else {
+                        alert("Could not delete from server"); //Added an alert if it doesnt delete
+                    }
+                });
         }
     });
 
