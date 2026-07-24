@@ -41,7 +41,6 @@ export default function AgriTechDashboard() {
   const [frost, setFrost] = useState('No');
   const [drought, setDrought] = useState('No');
 
-  const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
   const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   const addAlert = useCallback((message: string, type: 'freeze' | 'drought' | 'error') => {
@@ -65,33 +64,20 @@ export default function AgriTechDashboard() {
 
   const fetchForecast = useCallback(async (location: string) => {
     if (!location.trim()) return;
-    if (!API_KEY) {
-      addAlert("Weather service API key is missing.", "error");
-      setWeatherLoading('');
-      return;
-    }
 
     setWeatherLoading("Loading weather data...");
     setAlerts(prev => prev.filter(a => a.type !== 'freeze' && a.type !== 'drought'));
 
     try {
-      const geoURL = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location.trim())}&limit=1&appid=${API_KEY}`;
-      const geoResponse = await fetch(geoURL);
-      if (!geoResponse.ok) throw new Error("Geocoding service unavailable");
-      const geoData = await geoResponse.json();
+      const response = await fetch(`/api/weather?location=${encodeURIComponent(location.trim())}`);
+      const data = await response.json();
 
-      if (!geoData || geoData.length === 0) {
-        throw new Error(`Location "${location}" not found.`);
+      if (!response.ok) {
+        throw new Error(data.error || "Could not retrieve weather forecast");
       }
 
-      const { lat, lon, name, state } = geoData[0];
-      setLocationHeader(`${name}${state ? `, ${state}` : ""}`);
+      setLocationHeader(data.locationName);
 
-      const forecastURL = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${API_KEY}`;
-      const response = await fetch(forecastURL);
-      if (!response.ok) throw new Error("Could not retrieve weather forecast");
-
-      const data = await response.json();
       const dailyData: Record<string, { temps: number[]; conditions: { main: string; description: string }[]; rawDate: Date }> = {};
 
       data.list.forEach((item: { dt: number; main: { temp: number }; weather: { main: string; description: string }[] }) => {
@@ -151,7 +137,7 @@ export default function AgriTechDashboard() {
       const message = error instanceof Error ? error.message : "Failed to load weather data.";
       addAlert(message, "error");
     }
-  }, [API_KEY, addAlert]);
+  }, [addAlert]);
 
   useEffect(() => {
     fetchCrops();
