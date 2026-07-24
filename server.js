@@ -6,26 +6,27 @@ const { PrismaPg } = require("@prisma/adapter-pg");
 
 const app = express();
 
-//Connects
+//Database Connection
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-app.use(express.json()); //Auto parse incoming JSON
-app.use(express.static("public")); //Frontend files in the public folder
+//Middleware
+app.use(express.json());
+app.use(express.static("public"));
 
-//GET, grabs location
+//Grab stored location
 app.get("/api/location", async (req, res) => {
   try {
     const locationRecord = await prisma.location.findFirst();
     res.json({ lastLocation: locationRecord ? locationRecord.city : "" });
-  }
-  catch (error) {
+  } catch (error) {
+    console.error("Fetch location error:", error);
     res.status(500).json({ error: "Failed to fetch location" });
   }
 });
 
-//POST, updates location
+//Update stored location
 app.post("/api/location", async (req, res) => {
   const { location } = req.body;
   if (!location) return res.status(400).json({ error: "Location required" });
@@ -38,64 +39,96 @@ app.post("/api/location", async (req, res) => {
         where: { id: existingLocation.id },
         data: { city: location.trim() },
       });
-    }
-    else {
+    } else {
       await prisma.location.create({
         data: { city: location.trim() },
       });
     }
 
     res.json({ message: "Updated globally, saved to DB" });
-  }
-
-  catch (error) {
+  } catch (error) {
+    console.error("Save location error:", error);
     res.status(500).json({ error: "Failed to save location" });
   }
 });
 
-//GET, sends the array to the frontend
+app.get("/api/weather", async (req, res) => {
+  const { location } = req.query;
+  if (!location) return res.status(400).json({ error: "Location parameter required" });
+
+  const apiKey = process.env.OPENWEATHER_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Server missing OPENWEATHER_API_KEY" });
+
+  try {
+    const geoRes = await fetch(
+      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${apiKey}`
+    );
+    const geoData = await geoRes.json();
+
+    if (!geoData || geoData.length === 0) {
+      return res.status(404).json({ error: `Location "${location}" not found.` });
+    }
+
+    const { lat, lon, name, state } = geoData[0];
+
+    const forecastRes = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${apiKey}`
+    );
+    const forecastData = await forecastRes.json();
+
+    res.json({
+      locationName: `${name}${state ? `, ${state}` : ""}`,
+      list: forecastData.list,
+    });
+  } catch (error) {
+    console.error("Weather API error:", error);
+    res.status(500).json({ error: "Failed to fetch weather data" });
+  }
+});
+
+//Fetch all
 app.get("/api/crops", async (req, res) => {
   try {
     const crops = await prisma.crop.findMany({ orderBy: { plantedAt: "desc" } });
     res.json(crops);
-  }
-  catch (error) {
+  } catch (error) {
+    console.error("Fetch crops error:", error);
     res.status(500).json({ error: "Failed to fetch crops" });
   }
 });
 
-//POST, recieves crop data and stores on the server
+//Save new crop
 app.post("/api/crops", async (req, res) => {
   const { name, time, yield: cropYield, frost, drought } = req.body;
-  if (!name || !time || !cropYield) return res.status(400).json({ error: "Missing fields" });
+  if (!name || !time || !cropYield) return res.status(400).json({ error: "Missing required fields" });
 
   try {
     const newCrop = await prisma.crop.create({
       data: { name: name.trim(), time: time.trim(), yield: cropYield.trim(), frost, drought },
     });
     res.status(201).json(newCrop);
-  }
-  catch (error) {
-    res.status(500).json({ error: "Failed to save crops" });
+  } catch (error) {
+    console.error("Save crop error:", error);
+    res.status(500).json({ error: "Failed to save crop" });
   }
 });
 
-//DELETE, removes crops from the array
+//Remove crop
 app.delete("/api/crops/:id", async (req, res) => {
+  const cropId = parseInt(req.params.id, 10);
+  if (isNaN(cropId)) return res.status(400).json({ error: "Invalid crop ID" });
+
   try {
-    await prisma.crop.delete({ where: { id: parseInt(req.params.id) } });
+    await prisma.crop.delete({ where: { id: cropId } });
     res.sendStatus(204);
-  }
-  catch (error) {
+  } catch (error) {
+    console.error("Delete crop error:", error);
     res.status(500).json({ error: "Failed to delete crop" });
   }
 });
 
-//GET, sends the last searched city
-app.get("/api/location", (req, res) => res.json({ lastLocation }));
-//POST, updates with the most recent location
-app.post("/api/location", (req, res) => { lastLocation = req.body.location; res.json({ message: "Updated" }); });
+// 404 Fallback & Listener
+app.use((req, res) => res.status(404).json({ error: "Route not found" }));
 
-app.use((req, res) => res.status(404).json({ error: "Not found" }));
-
-app.listen(3000, () => console.log("Server running on port 3000")); //Shows we're listening ;p
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
