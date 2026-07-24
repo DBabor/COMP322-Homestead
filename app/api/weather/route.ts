@@ -11,6 +11,12 @@ export async function GET(request: Request) {
   }
 
   const apiKey = process.env.OPENWEATHER_API_KEY;
+  
+  console.log('--- VERCEL ENV CHECK ---');
+  console.log('OPENWEATHER_API_KEY present?:', !!apiKey);
+  console.log('Key length:', apiKey ? apiKey.length : 0);
+  console.log('------------------------');
+
   if (!apiKey) {
     return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
   }
