@@ -1,14 +1,39 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+
+interface Crop {
+  id: number;
+  name: string;
+  time: string;
+  yield: string;
+  frost: string;
+  drought: string;
+}
+
+interface ForecastDay {
+  dayName: string;
+  month: number;
+  date: number;
+  maxTemp: number;
+  minTemp: number;
+  conditionDesc: string;
+  isFreezing: boolean;
+}
+
+interface AlertItem {
+  id: string;
+  message: string;
+  type: 'freeze' | 'drought' | 'error';
+}
 
 export default function AgriTechDashboard() {
-  const [crops, setCrops] = useState([]);
+  const [crops, setCrops] = useState<Crop[]>([]);
   const [locationInput, setLocationInput] = useState('');
   const [locationHeader, setLocationHeader] = useState('Greensboro');
-  const [forecastDays, setForecastDays] = useState([]);
-  const [weatherLoading, setWeatherLoading] = useState('Loading outlook');
-  const [alerts, setAlerts] = useState([]);
+  const [forecastDays, setForecastDays] = useState<ForecastDay[]>([]);
+  const [weatherLoading, setWeatherLoading] = useState('Loading outlook...');
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
   
   const [cropName, setCropName] = useState('');
   const [growthTime, setGrowthTime] = useState('');
@@ -16,48 +41,51 @@ export default function AgriTechDashboard() {
   const [frost, setFrost] = useState('No');
   const [drought, setDrought] = useState('No');
 
-  const API_KEY = "24d0200f0eb8e09af866e15c198adcfe";
   const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-  useEffect(() => {
-    fetch("/api/crops")
-      .then(res => res.json())
-      .then(data => setCrops(data || []))
-      .catch(err => console.error(err));
-
-    fetchForecast("Greensboro");
+  const addAlert = useCallback((message: string, type: 'freeze' | 'drought' | 'error') => {
+    setAlerts(prev => [...prev, { id: crypto.randomUUID(), message, type }]);
   }, []);
 
-  async function fetchForecast(location: string) {
-    if (!location) return;
-    setWeatherLoading("Loading weather data");
-    setAlerts([]); 
+  const removeAlert = (id: string) => {
+    setAlerts(prev => prev.filter(a => a.id !== id));
+  };
+
+  const fetchCrops = useCallback(async () => {
+    try {
+      const res = await fetch("/api/crops");
+      if (!res.ok) throw new Error("Failed to fetch crops");
+      const data = await res.json();
+      setCrops(data || []);
+    } catch (err) {
+      console.error("Error loading crops:", err);
+    }
+  }, []);
+
+  const fetchForecast = useCallback(async (location: string) => {
+    if (!location.trim()) return;
+
+    setWeatherLoading("Loading weather data...");
+    setAlerts(prev => prev.filter(a => a.type !== 'freeze' && a.type !== 'drought'));
 
     try {
-      const geoURL = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${API_KEY}`;
-      const geoResponse = await fetch(geoURL);
-      const geoData = await geoResponse.json();
-
-      if (!geoData || geoData.length === 0) throw new Error("Location not found");
-
-      const { lat, lon, name, state } = geoData[0];
-      setLocationHeader(`${name}${state ? `, ${state}` : ""}`);
-
-      const forecastURL = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${API_KEY}`;
-      const response = await fetch(forecastURL);
-      if (!response.ok) throw new Error("Can't get weather");
-
+      const response = await fetch(`/api/weather?location=${encodeURIComponent(location.trim())}`);
       const data = await response.json();
-      const dailyData: Record<string, any> = {};
 
-      data.list.forEach((item: any) => {
-        const dateKey = item.dt_txt.split(" ")[0];
+      if (!response.ok) {
+        throw new Error(data.error || "Could not retrieve weather forecast");
+      }
+
+      setLocationHeader(data.locationName);
+
+      const dailyData: Record<string, { temps: number[]; conditions: { main: string; description: string }[]; rawDate: Date }> = {};
+
+      data.list.forEach((item: { dt: number; main: { temp: number }; weather: { main: string; description: string }[] }) => {
+        const dateObj = new Date(item.dt * 1000);
+        const dateKey = dateObj.toISOString().split("T")[0];
+
         if (!dailyData[dateKey]) {
-          dailyData[dateKey] = {
-            temps: [],
-            conditions: [],
-            rawDate: new Date(item.dt * 1000)
-          };
+          dailyData[dateKey] = { temps: [], conditions: [], rawDate: dateObj };
         }
         dailyData[dateKey].temps.push(item.main.temp);
         dailyData[dateKey].conditions.push({
@@ -69,14 +97,14 @@ export default function AgriTechDashboard() {
       let freezeWarning = false;
       let countDrought = 0;
       const daysArray = Object.keys(dailyData).slice(0, 5);
-      
-      const computedDays = daysArray.map(dateKey => {
+
+      const computedDays: ForecastDay[] = daysArray.map(dateKey => {
         const dayInfo = dailyData[dateKey];
         const maxTemp = Math.round(Math.max(...dayInfo.temps));
         const minTemp = Math.round(Math.min(...dayInfo.temps));
         const midIndex = Math.floor(dayInfo.conditions.length / 2);
-        const mainCondition = dayInfo.conditions[midIndex].main;
-        const conditionDesc = dayInfo.conditions[midIndex].description;
+        const mainCondition = dayInfo.conditions[midIndex]?.main || "Clear";
+        const conditionDesc = dayInfo.conditions[midIndex]?.description || "Clear";
 
         if (minTemp <= 32) freezeWarning = true;
         if (mainCondition === "Clear" && maxTemp > 85) countDrought++;
@@ -96,21 +124,25 @@ export default function AgriTechDashboard() {
       setWeatherLoading('');
 
       if (freezeWarning) {
-        addAlert("FREEZE WARNING: Bring in or cover frost susceptible plants", "freeze");
+        addAlert("FREEZE WARNING: Bring in or cover frost-susceptible plants.", "freeze");
       }
       if (countDrought >= 2) {
-        addAlert("DROUGHT WARNING: Set up irrigation systems", "drought");
+        addAlert("DROUGHT WARNING: High heat expected. Set up extra irrigation.", "drought");
       }
 
-    } catch (error) {
-      setWeatherLoading(`Could not load "${location}".`);
-      setLocationHeader("Error");
+    } catch (error: unknown) {
+      setWeatherLoading('');
+      setForecastDays([]);
+      setLocationHeader("Location Error");
+      const message = error instanceof Error ? error.message : "Failed to load weather data.";
+      addAlert(message, "error");
     }
-  }
+  }, [addAlert]);
 
-  const addAlert = (message: string, type: string) => {
-    setAlerts(prev => [...prev, { id: Date.now() + Math.random(), message, type }]);
-  };
+  useEffect(() => {
+    fetchCrops();
+    fetchForecast("Greensboro");
+  }, [fetchCrops, fetchForecast]);
 
   const handleCropSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,35 +151,45 @@ export default function AgriTechDashboard() {
     const yieldValue = cropYield.trim();
 
     if (!name || !time || !yieldValue) {
-      alert("FILL OUT ALL FIELDS");
+      addAlert("Please complete all form fields before submitting.", "error");
       return;
     }
 
     const cropData = { name, time, yield: yieldValue, frost, drought };
 
-    const res = await fetch("/api/crops", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(cropData)
-    });
+    try {
+      const res = await fetch("/api/crops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cropData)
+      });
 
-    if (res.ok) {
-      const newCrop = await res.json();
-      setCrops(prev => [...prev, newCrop]);
-      setCropName('');
-      setGrowthTime('');
-      setCropYield('');
-      setFrost('No');
-      setDrought('No');
+      if (res.ok) {
+        const newCrop = await res.json();
+        setCrops(prev => [...prev, newCrop]);
+        setCropName('');
+        setGrowthTime('');
+        setCropYield('');
+        setFrost('No');
+        setDrought('No');
+      } else {
+        throw new Error("Failed to save crop");
+      }
+    } catch {
+      addAlert("Could not save crop entry to server.", "error");
     }
   };
 
   const handleCropDelete = async (id: number) => {
-    const res = await fetch(`/api/crops/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setCrops(prev => prev.filter((crop: any) => crop.id !== id));
-    } else {
-      alert("Could not delete from server");
+    try {
+      const res = await fetch(`/api/crops/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setCrops(prev => prev.filter(crop => crop.id !== id));
+      } else {
+        throw new Error("Delete failed");
+      }
+    } catch {
+      addAlert("Could not delete crop entry from server.", "error");
     }
   };
 
@@ -163,8 +205,9 @@ export default function AgriTechDashboard() {
             <div key={alert.id} className={`farmAlert alert-${alert.type}`}>
               <span>{alert.message}</span>
               <button 
-                onClick={() => setAlerts(prev => prev.filter(a => a.id !== alert.id))} 
+                onClick={() => removeAlert(alert.id)} 
                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold', color: 'inherit' }}
+                aria-label="Close alert"
               >
                 &times;
               </button>
@@ -180,7 +223,7 @@ export default function AgriTechDashboard() {
               id="locationInput" 
               value={locationInput}
               onChange={(e) => setLocationInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && fetchForecast(locationInput)}
+              onKeyDown={(e) => e.key === 'Enter' && fetchForecast(locationInput)}
               placeholder="EX: Greensboro, NC" 
             />
             <button id="weatherButton" onClick={() => fetchForecast(locationInput)}>Search</button>
@@ -248,7 +291,7 @@ export default function AgriTechDashboard() {
               <tr>
                 <th>Crop</th>
                 <th>Growth Time (days)</th>
-                <th>Yield (lbs)</th>
+                <th>Yield</th>
                 <th>Frost Susceptible</th>
                 <th>Drought Susceptible</th>
                 <th></th>
@@ -262,11 +305,11 @@ export default function AgriTechDashboard() {
                   </td>
                 </tr>
               ) : (
-                crops.map((crop: any) => (
+                crops.map(crop => (
                   <tr key={crop.id}>
                     <td>{crop.name}</td>
                     <td>{crop.time}</td>
-                    <td>{crop.yield} lbs</td>
+                    <td>{crop.yield}</td>
                     <td>{crop.frost}</td>
                     <td>{crop.drought}</td>
                     <td>
